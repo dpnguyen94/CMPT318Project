@@ -5,9 +5,10 @@ from PIL import Image
 
 katkam_path = 'katkam-scaled'
 
-katkam_files = glob.glob(katkam_path + '/*.jpg')
 if not os.path.exists('katkam-rescaled'):
     os.makedirs('katkam-rescaled')
+
+katkam_files = glob.glob(katkam_path + '/*.jpg')
 for file in katkam_files:
     img = Image.open(file)
     new_width = 128
