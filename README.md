@@ -1,5 +1,5 @@
 ## Package Requirements
-This script should be run on Python 3.5+ and was tested in Spyder IDE (with [Anaconda] distribution). Assuming pre-installation of these following packages (using *pip install* command or similar methods):
+This script should be run on Python 3.5+ and was tested in Spyder IDE (with [Anaconda] distribution). Assume pre-installation of these following packages (using *pip install* command or similar methods):
 
   - NumPy
   - Pandas
@@ -12,7 +12,7 @@ This script should be run on Python 3.5+ and was tested in Spyder IDE (with [Ana
 This project was divided into two smaller parts with different approaches and implementations to the main problem. They are to be run separately and produce several distinguished results (please refer to code comments for more details). Here are some basic steps and correspondent outputs for the programs:
 
 1. Include **yvr-weather** (for weather data) and **katkam-scaled** (for weather images) folder in your running directory.
-2. Run **rescale_image.py** to resize images to half the original size (to reduce runtime while keeping accuracy). This will output a new folder called **katkam-rescaled** in the same directory that contains new images.
+2. Run **rescale_image.py** to resize images to half the original size (to reduce runtime while keeping accuracy). This will output a new folder named **katkam-rescaled** in the same directory that contains new images.
 3. Execute **predict\_weather\_pdnguyen.py** to produce some output as format shown on screen (only useful information).
 4. (hey Jag add something here, for your parts)
 
