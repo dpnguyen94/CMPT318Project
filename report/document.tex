@@ -114,11 +114,15 @@ Nguyen \textsc{Duc Phuong}
 
 \section{The Problem}
 
-\hl{Talk about the Problem}
+The main idea behind this project was provided by our instructor, Greg Baker. The idea was to see if we could automate the process of categorizing weather by observing still images, instead of having people manually categorize the weather in still images.
+
+This idea translated into our project as the following question: can a machine be trained to correctly determine the weather observed in an image? More specifically, all our training data and testing data was taken from a camera at a fixed location, so the question turned into, could a machine correctly distinguish different weather conditions in an image? This question remains unclear, and raises even more questions. What kind of weather conditions? How broad or specific are the weather categories? How many different weather conditions can a single image have? In this report, we will find out that these questions will help explain some of the limitations with trying to categorize weather using a machine. Later on, we will discuss how we refined the question after our inital results were limited in accuracy and consistency. 
 
 \section{The Data}
 
-\hl{Talk about the data we were given}
+Our data was provided by our instructor, Greg Baker. There were two parts to the data, one were the fixed point-of-view images of English Bay taken every hour. The other part was weather data provided by the Government of Canada. There was some initial clean up that had to be done, such as getting rid of weather records without a description of the weather. Some of the images did not have a matching weather observation, and vice versa. Beyond that, the descriptions for the weather were inconsistent, which would make it difficult for a machine to learn.
+
+We discovered that our initial data was not ideal for the question we were trying to answer, as we found out the our testing scores were very low with the raw data set. In this report, we will discuss how we cleaned the data after discussing our intial findings.
 
 \section{Trying Out Classifiers}
 
@@ -126,11 +130,15 @@ Nguyen \textsc{Duc Phuong}
 
 \section{Limiting the Options}
 
-\hl{Talk about limiting the number of categories for weather and how that helped + why we thought limiting the categories was a good idea}
+We found out one thing very quickly, the raw data set was not giving as the results we wanted. Our first attempt to try and work around this was to categorize the data in a way that made it easier for a machine to learn. The raw data set had 37 categories with a lot of overlap. More than half of these categories had less than 10 observations, so the odds of a machine correctly choosing such a category were almost nonexistent. We decided to limit the number of categories to 7, and then use a multi-label binarize to allow images to fall under multiple categories.
+
+Limiting the number of categories greatly increased our accuracy, as our testing score now averaged at around 0.60. We tried out many different types of classifiers after limiting the number of categories, and found that the nearest neighbours classifiers still provided the most consistent and accurate results.
 
 \section{A Different Approach}
 
-\hl{Talk about Jag trying out testing for individual categories --- this section may get long}
+The increase in accuracy by limiting the categories was great to see, but it felt there was still lots of room for improvement. We decided to approach this problem differently to see the results we could get. Up to this point, we were asking a machine to classify images based on the weather that was observed. But was this the right question? Looking at images, even for us humans, it was difficult to tell what exactly was the weather condition, especially with the low resolution of the images. We found that we could not run the machine with higher resolution images, because the scaled images took far too long to run, so anything of a higher resolution would make things even worse.
+
+So we could not brute force for better results, mainly because our computers were not powerful enough to perform quick computations. Instead, we refined our approach. What if instead of asking a machine to categorize images based on the weather present, we asked the machine to check whether or not a certain weather condition was present? We could give the machine an image and ask, are there clouds? Is it raining? Is it foggy?
 
 \section{Changing the Question}
 
