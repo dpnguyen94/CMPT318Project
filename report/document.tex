@@ -114,17 +114,21 @@ Duc Phuong \textsc{Nguyen}
 
 \section{The Problem}
 
-\hl{Talk about the Problem}
+The main idea behind this project was provided by our instructor, Greg Baker. The idea was to see if we could automate the process of categorizing weather by observing still images, instead of having people manually categorize the weather in still images.
+
+This idea translated into our project as the following question: can a machine be trained to correctly determine the weather observed in an image? More specifically, all our training data and testing data was taken from a camera at a fixed location, so the question turned into, could a machine correctly distinguish different weather conditions in an image? This question remains unclear, and raises even more questions. What kind of weather conditions? How broad or specific are the weather categories? How many different weather conditions can a single image have? In this report, we will find out that these questions will help explain some of the limitations with trying to categorize weather using a machine. Later on, we will discuss how we refined the question after our inital results were limited in accuracy and consistency. 
 
 \section{The Data}
 
-As mentioned in the Project Details, the weather data we have (from YVR airport station) does not perfectly match the weather images (from English Bay) so some clean-up jobs were required before training models. 
+Our data was provided by our instructor, Greg Baker. As mentioned in the Project Details, the weather data we have (from YVR airport station) does not perfectly match the weather images (from English Bay) so some clean-up jobs were required before training models. 
 
 First, weather data (observation) was read as a DataFrame which contains two main columns (Date/Time and Weather). Rows with empty observations will be excluded and Date/Time string will be converted to \textit{datetime64} object (using \textit{pd.to\_datetime()}) for merging later on.
 
-Next, the same process was implemented with images data from KatKam. The original images scale was quite big (256 x 192 = 49192 inputs) and more than necessary for training models so it was re-sized to only half (192 x 96 = 12288 inputs) while not losing any accuracy at later steps (tested). 
+Next, the same process was implemented with images data from KatKam. The original image scale was quite big (256 x 192 = 49192 inputs) and more than necessary for training models so it was re-sized to only half (192 x 96 = 12288 inputs) while not losing any accuracy at later steps (tested). 
 
-Each pixel was then represented as a \textit{float64} value (instead of 3 distinct integer values for \textit{RGB colors}, to limit the number of input features). Finally, they were reshaped to fit in the DataFrame with 'datetime' and all the features as columns and merged with the weather data to form a new DataFrame to be used for learning.
+Each pixel was then represented as a \textit{float64} value (instead of 3 distinct integer values for \textit{RGB colors}, to limit the number of input features). Finally, they were reshaped to fit in the DataFrame with `datetime' and all the features as columns and merged with the weather data to form a new DataFrame to be used for learning.
+
+\newpage
 
 \section{Trying Out Classifiers}
 
@@ -144,7 +148,8 @@ Since the original weather descriptions were in string format, we need to perfor
 
 The rest of the jobs is to run it through the model and get the results as below (estimated):
 
-\begin{table} [h!]
+\begin{table} [h]
+	\centering
 
 Number of categories: 17 \\
 
@@ -189,8 +194,8 @@ Thunderstorms         & Thunderstorms                            \\
 
 The final results acquired are not too terrible, indeed! Using the same methods we have discussed last section, we can reach up to \textbf{0.62} accuracy score, equivalent to a \textbf{90\%} boost while reducing number of categories to only half.
 
-\begin{table} [h!]
-
+\begin{table} [h]
+\centering
 Number of categories: 17 \\
 
 \begin{tabular}{c|c} 
@@ -201,6 +206,63 @@ Number of categories: 17 \\
 
 \end{table}
 
-Of course, this does not compensate for the lack of details in the outputs since it is a trade-off and we probably needs to tackle the problem in more efficient ways.
+Of course, this does not compensate for the lack of details in the outputs since it is a trade-off and we probably need to tackle the problem in more efficient ways.
+
+\section{A Different Approach}
+The increase in accuracy by limiting the categories was great to see, but it felt there was still lots of room for improvement. We decided to approach this problem differently to see the results we could get. Up to this point, we were asking a machine to classify images based on the weather that was observed. But was this the right question? Looking at images, even for us humans, it was difficult to tell what exactly was the weather condition, especially with the low resolution of the images. We found that we could not run the machine with higher resolution images, because the scaled images took far too long to run, so anything of a higher resolution would make things even worse.
+
+So we could not brute force for better results, mainly because our computers were not powerful enough to perform quick computations. Instead, we refined our approach. What if instead of asking a machine to categorize images based on the weather present, we asked the machine to check whether or not a certain weather condition was present? We could give the machine an image and ask, are there clouds? Is it raining? Is it foggy?
+
+\section{Single Weather Condition Results}
+
+Running the machine when looking for a single weather condition looked very promising at first. The scores were much higher than any classifiers we had used when trying to categorize images from into seven different options. However there is a huge tradeoff here, as we can only test for one weather condition at a time.
+
+\subsection{Predicting the Clouds}
+
+The first attempt at checking for individual conditions involved clouds. In order to determine whether a picture was cloudy, we should simply check if the observation included "Cloud." Running this test a few times, we found that the nearest neighbours classifer once again proved to be the most accurate with posting scores in 0.70-0.75 range. However, after looking at the data set, it can be noted that not all images with clouds were properly flagged as being cloudy. In order to get around this, we considered any weather conditions that cause precipitation to also be cloudy. With this modification, the accuracy improved and was consistently above 0.90.
+
+However, there were still some images left that had an incorrect cloud flag in the filtered data set. The final work around was to give a clear flag to those images with "Clear" in their descriptions. Any image that had a matching "Cloudy" flag and "Clear" flag were removed. This seemed to have no effect on the accuracy score, as the score remained around the same range.
+
+\subsection{Predicting the Rain}
+
+The next condition we tried to get a machine to predict was rain. Rain was difficult to tell with a human eye on a low resolution image, so were not feeling optimistic about this test. However, after running the machine, the results gave an average score of about 0.80.
+
+\subsection{Predicting the Fog}
+
+Fog felt even more hopeless than rain. How was a machine supposed to be able to tell if an image had foggy conditions. Fog is a near invisible layer that can be hard to tell even by the human eye. However, we let the test run, and were shocked when we got a score of 0.95 consistently.
+
+This looked too good to be true, and we soon discovered that this indeed was the case. Only 119 of the 2248 images were categorized as foggy. So even if the machine guessed ``no fog'' every time, the score would be above 0.95. Furthermore, this can easily be the case when using the nearest neighbours classifier where almost every point is going to be ``no fog.'' Trying this test out with other classifiers produced far worse results, so fog was something that we could not reliably predict, other than assuming there is no fog and hoping for the best.
+
+\section{Meaningfulness of Results}
+
+Our different approach definitely increased our accuracy scores, but does that really mean anything? If a machine says there are no clouds, but also says that it is raining, is that a good prediction? No, because these a very contradictory predictions, and we cannnot assume that one certain weather condition being predicted correct means others will do the same as well. This becomes a case of when we want to use product rule of probability to compute the true accuracy of our machine. If we go by the scores mentioned above about predicting clouds, rain and fog, then the probability that a machine makes a correct prediction is $ 0.90 \times 0.80 \times 0.95 = 0.68 $, which gets very close to the test score of categorizing images into seven conditions.
+
+Even if we were able to magically bump up the accuracy for the seven categories above, would our results still be meaningful? If our machine correctly predicts rain, does that mean anything? Rain could range anywhere from a light drizzle to heavy showers.
+
+Our problem was inspired on the idea of whether we could have a machine describe weather conditions instead of having to manually input everything. Is it worth it if a machine can make a correct prediction only 60\% of the time, and that is with a very limited set of categories?
+
+We feel that with the machines we have created, and the tests we have run, this is not a solution to our original problem. Our limitations in the areas of machine learning, image manipulation, inconsistencies in data, and lack of powerful hardware all played a role in limiting our results. So for now, we believe that a machine is not an ideal solution to replace manual input of weather conditions.
+
+\newpage
+
+\section{Accompishment Statements}
+
+\textbf{Webcam, Weather and Predictions} - \textit{a data science task to identify weather conditions based on camera photo shoots}
+
+\subsection{Duc Phuong Nguyen}
+
+\begin{itemize}
+\item Coordinated with a groupmate to come up with several effective approaches to divide and tackle the main problem.
+\item Analyzed and reorganized acquired data from different sources to create a meaningful and interactive set of data to be used.
+\item Built and tested three separate models for machine learning using Python (with Scikit-learn) to improve prediction results and boosted accuracy score by 90\%.
+\end{itemize}
+
+\subsection{Jagrajan Bhullar}
+
+\begin{itemize}
+	\item Collaborated with a group mate to tackle a conceptually challenging problem.
+	\item Tried out out-of-the-box approaches towards tackling a problem that seemed to have an upper limit on accuracy.
+	\item Created a report that was organized and straightforward to follow.
+\end{itemize}
 
 \end{document}
