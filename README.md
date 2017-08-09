@@ -14,7 +14,7 @@ This project was divided into two smaller parts with different approaches and im
 1. Include **yvr-weather** (for weather data) and **katkam-scaled** (for weather images) folder in your running directory.
 2. Run **rescale_image.py** to resize images to half the original size (to reduce runtime while keeping accuracy). This will output a new folder named **katkam-rescaled** in the same directory that contains new images.
 3. Execute **predict\_weather\_pdnguyen.py** to produce some output as format shown on screen (only useful information).
-4. (hey Jag add something here, for your parts)
+4. For tests on individual weather conditions, run **predict_sky.py** for clouds, **predict_rain.py** for rain, or **predict_fog.py** for fog.
 
 ## Further Notes
 
@@ -22,7 +22,6 @@ In the **predict\_weather\_pdnguyen.py**, there are three major parts which carr
 
 Single lines with # mark in front are debugging code and should not be worried about. Execution time might vary between 30-40s so please be patient and wait for it to finish running! 
 
-(Jag add something in here too, if you want)
 
 
 
