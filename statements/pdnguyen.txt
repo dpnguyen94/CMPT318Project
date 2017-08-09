@@ -1,0 +1,5 @@
+(under)(large-font) Academic Project:
+(bold) Webcam, Weather and Predictions - (italic) a data science task to identify weather conditions based on camera photo shoots
+- Coordinated with a groupmate to come up with several effective approaches to divide and tackle the main problem.
+- Analyzed and reorganized acquired data from different sources to create a meaningful and interactive set of data to be used.
+- Built and tested three separate models for machine learning using Python (with Scikit-learn) to improve prediction results and boosted accuracy score by 90%.
