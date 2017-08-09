@@ -63,7 +63,7 @@
 %----------------------------------------------------------------------------------------
 
 \textsc{\LARGE Simon Fraser University}\\[1.5cm] % Name of your university/college
-\textsc{\Large CMPT 318}\\[0.5cm] % Major heading such as course name
+\textsc{\Large CMPT 318 Data Science}\\[0.5cm] % Major heading such as course name
 %\textsc{\large Minor Heading}\\[0.5cm] % Minor heading such as course title
 
 %----------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ Jagrajan \textsc{Bhullar}
 ~
 \begin{minipage}{0.4\textwidth}
 \begin{flushright} \large
-Nguyen \textsc{Duc Phuong}
+Duc Phuong \textsc{Nguyen}
 \end{flushright}
 \end{minipage}\\[2cm]
 
@@ -114,38 +114,93 @@ Nguyen \textsc{Duc Phuong}
 
 \section{The Problem}
 
-The main idea behind this project was provided by our instructor, Greg Baker. The idea was to see if we could automate the process of categorizing weather by observing still images, instead of having people manually categorize the weather in still images.
-
-This idea translated into our project as the following question: can a machine be trained to correctly determine the weather observed in an image? More specifically, all our training data and testing data was taken from a camera at a fixed location, so the question turned into, could a machine correctly distinguish different weather conditions in an image? This question remains unclear, and raises even more questions. What kind of weather conditions? How broad or specific are the weather categories? How many different weather conditions can a single image have? In this report, we will find out that these questions will help explain some of the limitations with trying to categorize weather using a machine. Later on, we will discuss how we refined the question after our inital results were limited in accuracy and consistency. 
+\hl{Talk about the Problem}
 
 \section{The Data}
 
-Our data was provided by our instructor, Greg Baker. There were two parts to the data, one were the fixed point-of-view images of English Bay taken every hour. The other part was weather data provided by the Government of Canada. There was some initial clean up that had to be done, such as getting rid of weather records without a description of the weather. Some of the images did not have a matching weather observation, and vice versa. Beyond that, the descriptions for the weather were inconsistent, which would make it difficult for a machine to learn.
+As mentioned in the Project Details, the weather data we have (from YVR airport station) does not perfectly match the weather images (from English Bay) so some clean-up jobs were required before training models. 
 
-We discovered that our initial data was not ideal for the question we were trying to answer, as we found out the our testing scores were very low with the raw data set. In this report, we will discuss how we cleaned the data after discussing our intial findings.
+First, weather data (observation) was read as a DataFrame which contains two main columns (Date/Time and Weather). Rows with empty observations will be excluded and Date/Time string will be converted to \textit{datetime64} object (using \textit{pd.to\_datetime()}) for merging later on.
+
+Next, the same process was implemented with images data from KatKam. The original images scale was quite big (256 x 192 = 49192 inputs) and more than necessary for training models so it was re-sized to only half (192 x 96 = 12288 inputs) while not losing any accuracy at later steps (tested). 
+
+Each pixel was then represented as a \textit{float64} value (instead of 3 distinct integer values for \textit{RGB colors}, to limit the number of input features). Finally, they were reshaped to fit in the DataFrame with 'datetime' and all the features as columns and merged with the weather data to form a new DataFrame to be used for learning.
 
 \section{Trying Out Classifiers}
 
-\hl{Talk about the different classifiers Jason tried and the results}
+Our first intuition would lead us to a classification problem where inputs are the images data and outputs are the weather description, so let us start with some simple methods to deal with this and to produce some kinds of result. 
 
-\section{Limiting the Options}
+\subsection{Single-Label Classifier}
 
-We found out one thing very quickly, the raw data set was not giving as the results we wanted. Our first attempt to try and work around this was to categorize the data in a way that made it easier for a machine to learn. The raw data set had 37 categories with a lot of overlap. More than half of these categories had less than 10 observations, so the odds of a machine correctly choosing such a category were almost nonexistent. We decided to limit the number of categories to 7, and then use a multi-label binarize to allow images to fall under multiple categories.
+My first attempt to solve this problem is to train a model using single-label classifier (where different set of labels will give different outputs; for example, label set [Rain, Cloudy] would be distinguished from [Rain] or [Cloudy], which is not very practical, but worth trying).
 
-Limiting the number of categories greatly increased our accuracy, as our testing score now averaged at around 0.60. We tried out many different types of classifiers after limiting the number of categories, and found that the nearest neighbours classifiers still provided the most consistent and accurate results.
+Three approaches were used to build the model pipeline for predicting outputs: \textit{KNeighborsClassifier} (with n\_neighbors = 5, 7, 9, 11), \textit{DecisionTreeClassifier()} and \textit{RandomForestClassifier} (with n\_estimator = 10, 20, 30). Although the results were not very surprising, they all gave different accuracy scores as followed: (approximately) \textbf{0.43} for \textit{kNN}, \textbf{0.25} for \textit{DTree} and \textbf{0.18} for \textit{RForest}. In addition, \textit{PCA(250)} was used to decrease the number of dimensions in the inputs so runtime can be varied from 20 to 30 seconds, depending on parameters used. 
 
-\section{A Different Approach}
+\subsection{Multi-Label Classifier}
 
-The increase in accuracy by limiting the categories was great to see, but it felt there was still lots of room for improvement. We decided to approach this problem differently to see the results we could get. Up to this point, we were asking a machine to classify images based on the weather that was observed. But was this the right question? Looking at images, even for us humans, it was difficult to tell what exactly was the weather condition, especially with the low resolution of the images. We found that we could not run the machine with higher resolution images, because the scaled images took far too long to run, so anything of a higher resolution would make things even worse.
+However, this is actually considered a multi-label classification problem where the output can (and usually) belong to more than one categories (for example: [Drizzle, Fog] must be assigned two distinct labels Drizzle and Fog, instead of just one label). This led us to training a model using \textit{OneVsRestClassifier()} with built-in estimator (such as \textit{kNN}, \textit{DTree} and \textit{RForest} as mentioned above) to improve the accuracy score. 
 
-So we could not brute force for better results, mainly because our computers were not powerful enough to perform quick computations. Instead, we refined our approach. What if instead of asking a machine to categorize images based on the weather present, we asked the machine to check whether or not a certain weather condition was present? We could give the machine an image and ask, are there clouds? Is it raining? Is it foggy?
+Since the original weather descriptions were in string format, we need to perform some string processing to get desired outputs: first, separate them commas (,) and then, put them in list. These lists were then converted into a 2-D binary indicator array where element in row i, column j indicate the presence of label j-th in sample i-th, using \textit{MultiLabelBinarizer()}.
 
-\section{Changing the Question}
+The rest of the jobs is to run it through the model and get the results as below (estimated):
 
-\hl{How does the different approach change the question?}
+\begin{table} [h!]
 
-\section{Meaningfulness of Results}
+Number of categories: 17 \\
 
-\hl{Does the new approach answer the original question, or do these results lose meaning?}
+\begin{tabular}{c|c} 
+    \textit{KNeighborsClassifier(n\_neighbors=9)} & \textbf{0.33} \\
+    \textit{DecisionTreeClassifier()} & \textbf{0.16} \\
+    \textit{RandomForestClassfier(n\_estimators=20)} & \textbf{0.12}
+\end{tabular}
+
+\end{table}
+
+\subsection{Multi-Label Classifier with reduced categories}
+The main issue here might lie in the number of categories we have, in relevance to the weather descriptions. It could be a major obstacle for the classifiers to do a good job. Moreover, the images data obtained is not necessarily perfectly aligned with the weather observations (since they are recorded at different location and time) and it is very hard for the camera to capture all the information, merely by taking pictures of the sky (visually, there is little to none change in the images between types of Rain or Snow, or even between Rain/Snow and Cloudy).
+
+Thus, it could be a good idea to group up similar weather conditions and form a new set of labels to help the classifier identifying the outputs more robustly. Below are list of weather description before and after using filter:
+
+\begin{table} [h!]
+\centering
+\caption{List of weather conditions}
+\begin{tabular}{l|l} 
+
+\textbf{Original}     &                 \textbf{Reduced}         \\ \hline
+Clear                 &                 Clear                    \\
+Mainly Clear          &                                          \\ \hline
+Cloudy                &                 Cloudy                   \\
+Mostly Cloudy         &                                          \\ \hline
+Fog                   &                 Fog                      \\ 
+Freezing Fog          &                                          \\ \hline
+Drizzle               &                 Drizzle                  \\ \hline
+Rain                  &                                          \\
+Heavy Rain            &                                          \\
+Moderate Rain         &                 Rain                     \\ 
+Moderate Rain Showers &                                          \\
+Rain Showers          &                                          \\ \hline
+Snow                  &                                          \\
+Snow Pellets          &                 Snow                     \\
+Snow Showers          &                                          \\ 
+Moderate Snow         &                                          \\ \hline
+Thunderstorms         & Thunderstorms                            \\
+\end{tabular}
+\end{table}
+
+The final results acquired are not too terrible, indeed! Using the same methods we have discussed last section, we can reach up to \textbf{0.62} accuracy score, equivalent to a \textbf{90\%} boost while reducing number of categories to only half.
+
+\begin{table} [h!]
+
+Number of categories: 17 \\
+
+\begin{tabular}{c|c} 
+    \textit{KNeighborsClassifier(n\_neighbors=9)} & \textbf{0.62} \\
+    \textit{DecisionTreeClassifier()} & \textbf{0.35} \\
+    \textit{RandomForestClassfier(n\_estimators=20)} & \textbf{0.33}
+\end{tabular}
+
+\end{table}
+
+Of course, this does not compensate for the lack of details in the outputs since it is a trade-off and we probably needs to tackle the problem in more efficient ways.
 
 \end{document}
